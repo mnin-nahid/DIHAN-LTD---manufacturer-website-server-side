@@ -12,6 +12,7 @@ app.use(express.json());
 //function for all api
 async function run() {
     try {
+        // await client.connect();
 
     }
     finally {
