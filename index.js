@@ -15,6 +15,8 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.joyr7.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+
+//This function is for varify valid user.
 function varifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -30,7 +32,7 @@ function varifyJWT(req, res, next) {
     })
 }
 
-//function for all api
+//function for all API.
 async function run() {
     try {
         await client.connect();
@@ -38,12 +40,13 @@ async function run() {
         const orderCollection = client.db('dihan_ltd').collection('order');
         const userCollection = client.db('dihan_ltd').collection('users');
 
-
+        //To get all user.
         app.get('/user', varifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
 
+        //To make a normal user to admin.
         app.put('/user/admin/:email', varifyJWT, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
@@ -54,6 +57,7 @@ async function run() {
             res.send(result);
         })
 
+        //After login a valid user to send a Token and save the email in db.
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -67,7 +71,16 @@ async function run() {
             res.send({ result, token });
         });
 
-        //user orders
+        
+        //useAdmin
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        })
+
+        //Its for to take single user orders.
         app.get('/order', varifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -80,7 +93,15 @@ async function run() {
                 return res.status(403).send({ message: 'Forbidden access' })
             }
         })
-        //Delete API
+
+        //To collect all user orders.
+        app.get('/order', varifyJWT, async (req, res) => {
+            const query = {};
+            const orders = await orderCollection.find(query).toArray();
+            res.send(orders);
+        })
+
+        //To Delete a order.
         app.delete('/order/:orderId', async (req, res) => {
             const id = req.params.orderId;
             const query = { _id: ObjectId(id) };
@@ -88,7 +109,7 @@ async function run() {
             res.send(result);
         })
 
-        //Delete product API
+        //Its for Delete product.
         app.delete('/product/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -96,7 +117,7 @@ async function run() {
             res.send(result);
         })
 
-        //to get products form server
+        //To get all products form server.
         app.get('/product', async (req, res) => {
             const query = {};
             const cursor = productCollection.find(query);
@@ -104,14 +125,14 @@ async function run() {
             res.send(products);
         });
 
-        //to add products to server
+        //To add products to server
         app.post('/product', async (req, res) => {
             const newProduct = req.body;
             const result = await productCollection.insertOne(newProduct);
             res.send(result);
         });
 
-        //to get single product form server
+        //To get single product form server
         app.get('/product/:productId', async (req, res) => {
             const productId = req.params.productId;
             const query = { _id: ObjectId(productId) };
@@ -119,12 +140,13 @@ async function run() {
             res.send(product);
         });
 
-        //order collection api
+        //Order collection api
         app.get('/order', async (req, res) => {
             const query = {};
             const orders = await orderCollection.find(query).toArray();
             res.send(orders);
         })
+
         //Order POST API
         app.post('/order', async (req, res) => {
             const newOrder = req.body;
@@ -137,13 +159,16 @@ async function run() {
         //final work
     }
 };
+
+
 run().catch(console.dir);
 
 
-
+//Root api
 app.get('/', (req, res) => {
     res.send('Hello form Dihan-LTD Web server');
 });
+
 
 app.listen(port, () => {
     console.log("listening to port", port);
