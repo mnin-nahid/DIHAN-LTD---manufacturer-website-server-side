@@ -39,6 +39,20 @@ async function run() {
         const userCollection = client.db('dihan_ltd').collection('users');
 
 
+        app.get('/user', varifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
+
+        app.put('/user/admin/:email', varifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -71,6 +85,14 @@ async function run() {
             const id = req.params.orderId;
             const query = { _id: ObjectId(id) };
             const result = await orderCollection.deleteOne(query);
+            res.send(result);
+        })
+
+        //Delete product API
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(query);
             res.send(result);
         })
 
