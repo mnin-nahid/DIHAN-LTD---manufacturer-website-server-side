@@ -32,6 +32,18 @@ function varifyJWT(req, res, next) {
     })
 }
 
+//varify admin
+const varifyAdmin = async (req, res, next) => {
+    const requester = req.decoded.email;
+    const requesterAccount = await userCollection.findOne({ email: requester });
+    if (requesterAccount.role === 'admin') {
+        next();
+    }
+    else {
+        res.status(403).send({ message: 'You Dont have power to make him admin' })
+    }
+}
+
 //function for all API.
 async function run() {
     try {
@@ -47,8 +59,28 @@ async function run() {
             res.send(users);
         });
 
+        //varify admin
+        const varifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'You Dont have power to make him admin' })
+            }
+        }
+        
+        //To get single user.
+        app.get('/user/profile/:email',  async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email};
+            const user = await userCollection.findOne(query);
+            res.send(user);
+        });
+
         //To make a normal user to admin.
-        app.put('/user/admin/:email', varifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', varifyJWT, varifyAdmin, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
@@ -72,7 +104,7 @@ async function run() {
             res.send({ result, token });
         });
 
-        
+
         //useAdmin
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
@@ -167,6 +199,17 @@ async function run() {
             const result = await reviewCollection.insertOne(newReview);
             res.send(result);
         });
+
+        app.put("/update/:email", async (req, res) => {
+            const email = req.params.email;
+            const data = req.body;
+            const update = await userCollection.updateOne({ email: email },
+                        {
+                          $set: { ...data },
+                        }
+                        );
+            res.send(update);
+        })
 
     }
     finally {
