@@ -39,6 +39,7 @@ async function run() {
         const productCollection = client.db('dihan_ltd').collection('products');
         const orderCollection = client.db('dihan_ltd').collection('order');
         const userCollection = client.db('dihan_ltd').collection('users');
+        const reviewCollection = client.db('dihan_ltd').collection('reviews');
 
         //To get all user.
         app.get('/user', varifyJWT, async (req, res) => {
@@ -151,6 +152,13 @@ async function run() {
         app.post('/order', async (req, res) => {
             const newOrder = req.body;
             const result = await orderCollection.insertOne(newOrder);
+            res.send(result);
+        });
+
+        //review post to server
+        app.post('/review', async (req, res) => {
+            const newReview = req.body;
+            const result = await reviewCollection.insertOne(newReview);
             res.send(result);
         });
 
