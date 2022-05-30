@@ -127,13 +127,6 @@ async function run() {
             }
         })
 
-        //To collect all user orders.
-        app.get('/order', varifyJWT, async (req, res) => {
-            const query = {};
-            const orders = await orderCollection.find(query).toArray();
-            res.send(orders);
-        })
-
         //To Delete a order.
         app.delete('/order/:orderId', async (req, res) => {
             const id = req.params.orderId;
